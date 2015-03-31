@@ -30,10 +30,11 @@
                 } else if ($token = $this->getInput('access_token')) {
                     $token = trim($token);
                 }
-                
-                $user_token = $user->getAPIkey();
 
-                if (!empty($indieauth_tokens[$token]) || $token == $user_token) {
+                $user_token = $user->getAPIkey();
+                $indieauth_token = $indieauth_tokens[$token];
+
+                if (!empty($indieauth_token) || $token == $user_token) {
 
                     // If we're here, we're authorized
 
@@ -43,6 +44,7 @@
                     $name        = $this->getInput('name');
                     $in_reply_to = $this->getInput('in-reply-to');
                     $syndicate   = $this->getInput('syndicate-to');
+                    $posse_link = $this->getInput('syndication');
 
                     if ($type == 'entry') {
                         if (!empty($_FILES['photo'])) {
@@ -71,7 +73,14 @@
                             if (!empty($syndicate)) {
                                 $syndication = array(trim(str_replace('.com', '', $syndicate)));
                                 $this->setInput('syndication', $syndication);
+                            } else if (!empty($posse_link)) {
+                                if (!empty($indieauth_token) && $indieauth_token['client_id'] == 'https://ownyourgram.com') {
+                                    $entity->setPosseLink('instagram', $posse_link, '@onepercolated');
+                                } else {
+                                    $entity->setPosseLink('micropub', $posse_link);
+                                }
                             }
+
                             if ($entity->saveDataFromInput()) {
                                 //$this->setResponse(201);
                                 header('Location: ' . $entity->getURL());
