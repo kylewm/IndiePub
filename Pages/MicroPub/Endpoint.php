@@ -73,7 +73,8 @@
                             if (!empty($syndicate)) {
                                 $syndication = array(trim(str_replace('.com', '', $syndicate)));
                                 $this->setInput('syndication', $syndication);
-                            } else if (!empty($posse_link)) {
+                            }
+                            if (!empty($posse_link)) {
                                 if (!empty($indieauth_token) && $indieauth_token['client_id'] == 'https://ownyourgram.com') {
                                     $entity->setPosseLink('instagram', $posse_link, '@onepercolated');
                                 } else {
