@@ -4,6 +4,7 @@
 
         use Idno\Common\ContentType;
         use Idno\Entities\User;
+        use IdnoPlugins\IndiePub\Pages\IndieAuth\Token;
 
         class Endpoint extends \Idno\Common\Page
         {
@@ -20,20 +21,32 @@
             {
 
                 $headers = $this->getallheaders();
-                $user    = \Idno\Entities\User::getOne(array('admin' => true));
-                \Idno\Core\site()->session()->refreshSessionUser($user);
-                $indieauth_tokens = $user->indieauth_tokens;
-
                 if (!empty($headers['Authorization'])) {
                     $token = $headers['Authorization'];
                     $token = trim(str_replace('Bearer', '', $token));
                 } else if ($token = $this->getInput('access_token')) {
                     $token = trim($token);
                 }
-                
-                $user_token = $user->getAPIkey();
 
-                if (!empty($indieauth_tokens[$token]) || $token == $user_token) {
+                $valid_token = false;
+
+                if (!empty($token)) {
+                    $found = Token::findUserForToken($token);
+                    if (!empty($found)) {
+                        $user = $found['user'];
+                        \Idno\Core\site()->session()->refreshSessionUser($user);
+                        $valid_token = true;
+                    }
+                    else {
+                        $user = \Idno\Entities\User::getOne(array('admin' => true));
+                        if ($token == $user->getAPIkey()) {
+                            \Idno\Core\site()->session()->refreshSessionUser($user);
+                            $valid_token = true;
+                        }
+                    }
+                }
+
+                if ($valid_token) {
 
                     // If we're here, we're authorized
 
@@ -43,8 +56,8 @@
                     $name        = $this->getInput('name');
                     $in_reply_to = $this->getInput('in-reply-to');
                     $syndicate   = $this->getInput('syndicate-to');
-                    
-                    
+
+
                      // For OwnYourGram
                     $syndication2 = $this->getInput('syndication');
                     $syndication_link = "<a href=\"{$syndication2}\" rel=syndication class=\"u-syndication\"></a>";
@@ -66,7 +79,7 @@
                             $type = 'article';
                         }
                     }
-                    
+
 
                     if ($type == 'entry') {
                         if (!empty($_FILES['photo'])) {
@@ -97,7 +110,7 @@
                                 $this->setInput('syndication', $syndication);
                             }
                             if ($entity->saveDataFromInput()) {
-                                //$this->setResponse(201);
+                                $this->setResponse(201);
                                 header('Location: ' . $entity->getURL());
                                 exit;
                             } else {
