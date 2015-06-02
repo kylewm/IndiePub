@@ -29,33 +29,18 @@
                      exit;
                  }
 
-                 error_log('ready to render this template');
-
-
                  $me_prime = $user->getURL();
-
-
-                 error_log('me = '.$user->getURL());
-
-                 try {
-
                  $t        = \Idno\Core\site()->template();
                  $t->body  = $t->__(array(
                      'me'           => $me_prime,
                      'client_id'    => $client_id,
+                     'pretty_id'    => preg_replace('/^https?:\/\//', '', $client_id),
                      'scope'        => $scope,
                      'redirect_uri' => $redirect_uri,
                      'state'        => $state,
                  ))->draw('indiepub/auth');
-
-                 error_log('template body'.$t->body);
-
-                 $t->title = 'Approve';
+                 $t->title = empty($scope) ? 'Authenticate' : 'Authorize';
                  return $t->drawPage();
-
-                 } catch(Exception $e) {
-                     error_log('caught exception '.$e);
-                 }
             }
 
             function post()
